@@ -1,0 +1,268 @@
+---
+title: "User Guide"
+author: "Jiri Hron (jiri.m.hron@gmail.com)"
+output:
+  html_document:
+    fig_height: 6
+    fig_width: 8
+---
+
+Support vector machines are one of today's most popular machine learning 
+algorithms. This application is giving users a possibility to try out and
+hopefully better understand SVMs' behavior.
+
+## About application
+
+The following part of this guide is giving a very brief introduction into
+Support Vector Machines. If you are already familiar with SVMs, you can start
+using the application following these simple steps:
+
+  1. Generate two sample groups of points in 2D space, which will
+  then be presented as training sample to SVM. To generate such data, `rnorm` 
+  function is used with following parameters specified by user:
+    a. specify mean x1 values of groups A and B,
+    b. specify mean x2 values of groups A and B,
+    c. specify standard deviation for groups A and B (common for both 
+    dimensions),
+    d. optionally specify seed for reproducibility.
+  2. Specify the cost of violation of margin.
+  3. Pick the kernel function (you can only pick from Linear or Gaussian kernel)
+    a. if you pick Gaussian kernel, you can choose size of standard deviation
+    for this function:
+    
+    $$f^{(i)} = K\big(x_0, x_1\big) = 
+      exp\Big(-{\frac{\|x_0 - x_1\|}{2\sigma^2}}\Big)$$
+      
+  4. Train the SVM on all of the generated observations and observe
+  separation of of the feature space by virtual line created by different colors
+  of point at a grid (small dots). Bigger dots are originally generated 
+  observations. Point which are surrounded by little triangles are support 
+  vectors.
+
+Application is using `C-svc` type of classification parametrized by $C$.
+SVM implementation used is `ksvm` function from `kernlab` package.
+
+## Introduction to SVMs
+
+### Disclaimer
+
+Following text is a very vague adaptation of Andrew Ng's explanation of SVMs
+as taught in Machine Learning class at Coursera (2014). I am aware that many
+of the details are missing or might seem over-simplified (e.g. not mentioning
+dot products), and would not recommend anyone to who would really like to 
+understand SVMs to start with this text. If you would like to do some
+adjustments on the application or this document, either send me an email, or
+simply fork this application at <https://github.com/jiri-hron/SVMs>.
+
+For those interested in this topic 
+I would personally recommend these resources: 
+
+  1. [Machine Learning course by Andrew Ng][1]
+  2. [Introduction to Statistical Learning (James et al., 2013)][2], p. 337-359
+  3. [Elements of Statistical Learning (Hastie et al., 2009)][3], p. 417-454
+  (advanced)
+  
+Caveat: The first resource is using slightly different terminology, e.g. tuning
+parameter $C$ by prof. Ng is used to penalize training observations for
+violating the margin, whereas other two resources uses $C$ as a "budget" for how 
+many training observations are allowed to violate the margin, and thus $C$ has
+opposite interpretations in relation to the optimization problem and 
+bias-variance trade-off.
+
+For anyone reading the following paragraphs, they stick with prof. Ng's
+definition which presumably stemms from the original definition by
+(Vapnik, 1979).
+
+### Support vector machines
+
+Support vector machines are basically a generalization of _maximum margin
+classifiers_ concept, which is trying to find a best separating hyper-plane
+w.r.t. to the training data set. By best separating, we mean such with the
+largest possible margin. To illustrate this, look at the following figure:
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.align='center'}
+if(!require(e1071)) {
+  stop("install e1071 package")
+}
+
+## generate demo data
+set.seed(32942)
+x01 = rnorm(100, mean = 1, sd = 1)
+x02 = rnorm(100, mean = 1, sd = 1)
+x12 = rnorm(100, mean = 4, sd = .8)
+x22 = rnorm(100, mean = 4, sd = .8)
+df = data.frame(x1 = c(x01,x12), x2 = c(x02, x22))
+
+## add response variable
+y = rep("A", 200)
+y[101:200] = "B"
+x = as.matrix(df)
+df$cat = as.factor(y)
+
+## fit svm model
+fit.svm = svm(cat ~ .,
+              data = df,
+              kernel = "linear",
+              cost = 10,
+              scale = FALSE,
+              type = "C-classification")
+
+## make grid of all points on the graph in range of generated clusters and
+## predict category for each of the points on the grid
+source("./make.grid.R", local = TRUE)
+xgrid = make.grid(x)
+ygrid = predict(fit.svm, xgrid)
+df.grid = data.frame(x1 = xgrid$x1, x2 = xgrid$x2, cat = ygrid)
+
+## get coeffiecients used for classification of each of the observations on
+## the grid; will be used on the plot to visualize decision boundary and
+## the associated margin
+beta = drop(t(fit.svm$coefs) %*% as.matrix(df[fit.svm$index, -3]))
+beta0 = fit.svm$rho
+
+
+## plot the grid to show separation done by hyperplane found by SVM
+plot(xgrid, col = c("red", "blue")[as.numeric(ygrid)],
+     pch = 20, cex = 0.2, main = "Separation by hyperplane with margins")
+
+## plot generated data set
+points(df[,-3],
+       col = c("red", "blue")[as.numeric(df[,3])],
+       pch = 19 )
+
+## highlight support vectors by drawing rectangles around them
+points(df[fit.svm$index, -3], pch = 5, cex = 2)
+
+## plot the decision boundary and margin
+abline(beta0/beta[2], -beta[1]/beta[2])
+abline((beta0 - 1)/beta[2], -beta[1]/beta[2], lty = 2)
+abline((beta0 + 1)/beta[2], -beta[1]/beta[2], lty = 2)
+
+```
+
+Here the solid black line shows a separating hyper-plane (which is in 2D a line),
+and dashed lines are showing the borders of the margin (margin is the space
+between both dashed lines). As you can see in this case, size of the margin
+is fully dependent only on a few points closest to the margin. 
+
+This concept of being dependent on only a few of training observations can
+produce relatively much more robust classifiers than such algorithms as
+linear discriminant analysis or logistic regression.
+
+To find such separating hyper-plane, we are trying to solve this optimization
+problem:
+
+$$min_\theta C \sum_{i=1}^m \Big[ y^{(i)} cost_1(\theta^T f^{(i)})
+    + (1 - y^{(i)}) cost_0 (\theta^T f^{(i)}) \Big] 
+    + \frac{1}{2} \sum_{i=1}^n \theta_j^2$$ 
+    
+where $m$ is a number of observations in the training set (number of rows 
+of training set matrix), $n$ is a number of features (in the case of SVMs this
+is equal to $m$ - will be described), $y^{(i)}$ is a group to which $i^{th}$
+observation belongs ($y^{(i)} \in \{0,1\}$), $C$ is a tuning parameter which
+virtually gives the cost of any observation violating its corresponding
+margin (will be described), $(cost_1, cost_0)$ give cost of classification of
+$i^{th}$ training observation to group 1 and 0 zero respectively, $f^{(i)}$
+is a kernel function used to transform values of $x^{(i)}$-th based on other
+observations in the training set, and finally $\theta$ are parameters which
+should be learned by SVM in order to minimize the whole cost function.
+
+To understand $f^{(i)}$, let's look at following figure:
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.align='center'}
+a = c(1,1)
+b = c(2,1)
+X = rbind(a, b)
+
+xrange = c(-0.2, 2.2)
+yrange = c(0,1.2)
+plot(X, xlim = xrange, ylim = yrange,
+     main = "Linear vs. Gaussian kernel",
+     xlab = "x", ylab = "",
+     type = "b", col = "#FF5575", pch = 20, lwd = 3,
+     axes=FALSE, frame.plot=TRUE)
+Axis(side = 1, labels = TRUE)
+text(X, c("A", "B"), pos = 3)
+
+xseq = seq(from = xrange[1], to = xrange[2], length = 1000)
+yseq = dnorm(xseq, mean = a[1], sd = 0.5)
+lines(xseq, yseq, col = "#FDB827", type = "l")
+
+lines(c(a[1],a[1]),c(0,a[2]),lty=2,col = "lightgrey")
+lines(c(b[1],b[1]),c(0,b[2]),lty=2,col = "lightgrey")
+lines(c(b[1],b[1]),c(0, dnorm(b[1], mean = a[1], sd = 0.5)),
+      lwd = 3, col = "blue")
+```
+
+What you can see are measures of similarity used by Linear and Gaussian kernel.
+When using a linear kernel, we simply say that two points are similar to each
+other, if they are situated close to each other. With Gaussian kernel, we
+basically evaluate similarity of other points based on the probability they
+are stemming from the same Gaussian distribution.  
+In the figure above, similarity of point B to point A is depicted by blue and
+red lines. You can imagine linear kernel's measure of similarity as proportional
+to an inverse of the Euclidean distance between the two points. On the other
+hand, Gaussian kernel's measure of similarity is directly proportional to the
+probability of point B in respect to Gaussian distribution with mean and at
+point A and some standard deviation $\sigma$ (this is a tuning parameter you can
+specify in the application).  
+
+Notice that we are calculating the similarity measure for each of the pairs of
+points in the training data set, that means $m \choose 2$ where $m$ is the 
+number of observations in the training set. In other words, the feature vector
+for $i^{th}$ observation is of length $m$ (more precisely $m + 1$, with plus one
+dimension for the intercept). This explains our previous claim that in the case 
+of SVMs, $m$ is equal to $n$ (number of features) in the regularization part of 
+optimization formula $\sum_{i=1}^n \theta_j^2$ (as usual we do not penalize the 
+intercept).
+
+Eventually, we need to estimate vector $\theta$ in order to minimize the problem
+stated in the optimization problem. This problem involves functions $cost_1$ and
+$cost_0$, which state cost of classification of observation $i$ to the category
+$1$, resp $0$. SVMs use [Hinge loss function][4] which is somewhat similar to
+the cost function of logistic regression, apart from assigning cost $0$ for all
+training points which are on the "correct" side of the margin, and penalty for
+training points which are on the correct side of the decision boundary 
+(hyperplane), but are violating the margin (two zones between solid line and 
+dashed lines in the first plot, one for each of the categories). It can be
+shown, that elements of $\theta$ under such conditions are non-zero only for 
+support vectors, if $\theta$ is optimal.  
+
+What are support vectors? If you return back to the first plot on this page,
+you will see that some of the points do have around them small rectangles. You
+could also notice, that all of these points are lying directly on the margin
+borders (shown by dashed lines). Generally, support vectors are all points, that
+lies directly at or at the wrong side of the respective margin border.  
+
+This leads back to the notion of maximum margin classifiers from which SVMs 
+were developed. We are not only trying to find a classifier, that would be able
+to find decision boundary which correctly predicts each observation's class, 
+but we would also like to find such decision boundary that would be as much
+confident at its predictions as possible. This basically equals to finding 
+a hyperplane which would separate the data in such manner, that their distance
+to the boundary is maximal.  
+
+You can directly influence size of the margin by adjusting the tuning 
+parameter $C$. With growing $C$, you are assigning a bigger penalty for each
+training observation that violates (crosses) the margin. This could naturally
+lead to over-fitting. On the other hand, if $C$ is small, you don't really care
+about some of the observations crossing the margin, and thus you can make the
+margin wider, even though more of the training observations would violate it,
+because it will become wider. Wider margin can be more robust, but can also 
+underfit the data (high bias).
+
+Finally, what is the difference between fitting SVM with Linear and with 
+Gaussian kernels? Basically, Linear kernel can only produce linear separating
+hyperplanes, whereas Gaussian kernel can fit also non-linear hyperplanes. Linear
+kernels are out-performing other types of kernels in cases where the data are
+in fact linearly separable or in high-dimensional problems.
+Gaussian kernels on the other hand can prove very useful in many cases where
+there is no clear boundary between each of the response vector categories,
+or when the data cannot be separated by linear, but can be separted by
+non-linear boundary.
+
+
+[1]: https://www.coursera.org/course/ml
+[2]: http://www-bcf.usc.edu/~gareth/ISL/
+[3]: http://statweb.stanford.edu/~tibs/ElemStatLearn/
+[4]: http://en.wikipedia.org/wiki/Hinge_loss

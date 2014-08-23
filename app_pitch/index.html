@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Support Vector Machines - interactive app</title>
+  <meta name="description" content="">
+  <meta name="author" content="Jiri Hron">
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="stylesheet" href="http://slidifylibraries2.googlecode.com/git/inst/libraries/frameworks/revealjs/css/reveal.min.css">
+  <link rel="stylesheet" href="http://slidifylibraries2.googlecode.com/git/inst/libraries/frameworks/revealjs/css/theme/default.css" id="theme">
+  <link rel="stylesheet" href="http://slidifylibraries2.googlecode.com/git/inst/libraries/highlighters/highlight.js/css/tomorrow.css" id="theme">
+  <!--[if lt IE 9]>
+  <script src="lib/js/html5shiv.js"></script>
+  <![endif]-->  <link rel="stylesheet" href = "assets/css/ribbons.css">
+
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+      <section class='' data-state='' id='slide-1'>
+  <h2>Support Vector Machines interactive</h2>
+  <p>by Jiri Hron</p>
+
+</section>
+<section class='' data-state='' id='slide-2'>
+  <h2>Why SVM?</h2>
+  <p><br></p>
+
+<ol>
+<li>Currently one of the most popular algorithms among Machine Learning
+community due to its effectivness</li>
+<li>Can be used both in classification and regression settings</li>
+<li>Elegant algorithm with non-trivial implementation and tuning</li>
+</ol>
+
+</section>
+<section class='' data-state='' id='slide-3'>
+  <h2>Who can be interested?</h2>
+  <p><br></p>
+
+<ol>
+<li>Teachers - to demonstrate in real-time how SVMs work with different tuning
+parameters and settings</li>
+<li>Students - who are currently studying SVMs and visual demonstrations
+help them understand</li>
+<li>Geeks - who have two minutes of time and are keen on machine learning, 
+algorithms or statistics</li>
+</ol>
+
+</section>
+<section class='' data-state='' id='slide-4'>
+  
+  <p><img src="data:image/png;base64,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" title="plot of chunk unnamed-chunk-1" alt="plot of chunk unnamed-chunk-1" style="display: block; margin: auto;" /></p>
+
+<p><br></p>
+
+<p>Application enables any user to quickly generate a data set and fit SVM to it 
+with readily available possibility to try-out diffetent tuning parameters.</p>
+
+</section>
+<section class='' data-state='' id='slide-5'>
+  <h2>Application capabilities</h2>
+  <p style="text-align: left">Based on this formula:</p>
+
+<p>\[min_\theta C \sum_{i=1}^m \Big[ y^{(i)} cost_1(\theta^T f^{(i)})
+    + (1 - y^{(i)}) cost_0 (\theta^T f^{(i)}) \Big]\]
+    \[+ \frac{1}{2} \sum_{i=1}^n \theta_j^2\] </p>
+
+<p style="text-align: left">where $cost_1$ and $cost_0$ are 
+corresponding Hinge loss functions for given class you can:</p>
+
+<ul>
+<li>use Linear or Gaussian kernel function (here \(f^{(i)}\))</li>
+<li>adjust parameter \(C\)</li>
+<li>change \(\sigma\) when using Gaussian kernel</li>
+<li>generate custom data set with two groups and train a new SVM instance on it</li>
+</ul>
+
+</section>
+    </div>
+  </div>
+</body>
+  <script src="http://slidifylibraries2.googlecode.com/git/inst/libraries/frameworks/revealjs/lib/js/head.min.js"></script>
+  <script src="http://slidifylibraries2.googlecode.com/git/inst/libraries/frameworks/revealjs/js/reveal.min.js"></script>
+  <script>
+  // Full list of configuration options available here:
+  // https://github.com/hakimel/reveal.js#configuration
+  Reveal.initialize({
+    controls: true,
+    progress: true,
+    history: true,
+    center: true,
+    theme: Reveal.getQueryHash().theme || 'default', 
+    transition: Reveal.getQueryHash().transition || 'default', 
+    dependencies: [
+    // Cross-browser shim that fully implements classList -
+    // https://github.com/eligrey/classList.js/
+      { src: 'http://slidifylibraries2.googlecode.com/git/inst/libraries/frameworks/revealjs/lib/js/classList.js', condition: function() { return !document.body.classList;}},
+      // Zoom in and out with Alt+click
+      { src: 'http://slidifylibraries2.googlecode.com/git/inst/libraries/frameworks/revealjs/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+      // Speaker notes
+      { src: 'http://slidifylibraries2.googlecode.com/git/inst/libraries/frameworks/revealjs/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+      // Remote control your reveal.js presentation using a touch device
+      //{ src: 'http://slidifylibraries2.googlecode.com/git/inst/libraries/frameworks/revealjs/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+      ]
+  });
+  </script>  <!-- MathJax: Fall back to local if CDN offline but local image fonts are not supported (saves >100MB) -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [['$','$'], ['\\(','\\)']],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<!-- <script src="https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script> -->
+<script>window.MathJax || document.write('<script type="text/x-mathjax-config">MathJax.Hub.Config({"HTML-CSS":{imageFont:null}});<\/script><script src="http://slidifylibraries2.googlecode.com/git/inst/libraries/widgets/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"><\/script>')
+</script>
+<!-- LOAD HIGHLIGHTER JS FILES -->
+<script src="http://slidifylibraries2.googlecode.com/git/inst/libraries/highlighters/highlight.js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<!-- DONE LOADING HIGHLIGHTER JS FILES -->
+ 
+
+</html>

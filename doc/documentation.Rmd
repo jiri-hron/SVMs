@@ -89,11 +89,11 @@ if(!require(e1071)) {
 }
 
 ## generate demo data
-set.seed(32942)
-x01 = rnorm(100, mean = 1, sd = 1)
-x02 = rnorm(100, mean = 1, sd = 1)
-x12 = rnorm(100, mean = 4, sd = .8)
-x22 = rnorm(100, mean = 4, sd = .8)
+set.seed(132433)
+x01 = rnorm(100, mean = 1, sd = .5)
+x02 = rnorm(100, mean = 1, sd = .5)
+x12 = rnorm(100, mean = 4, sd = .6)
+x22 = rnorm(100, mean = 4, sd = .6)
 df = data.frame(x1 = c(x01,x12), x2 = c(x02, x22))
 
 ## add response variable
@@ -137,7 +137,7 @@ points(df[,-3],
 points(df[fit.svm$index, -3], pch = 5, cex = 2)
 
 ## plot the decision boundary and margin
-abline(beta0/beta[2], -beta[1]/beta[2])
+abline(beta0/beta[2], -beta[1]/beta[2], lwd = 2)
 abline((beta0 - 1)/beta[2], -beta[1]/beta[2], lty = 2)
 abline((beta0 + 1)/beta[2], -beta[1]/beta[2], lty = 2)
 
